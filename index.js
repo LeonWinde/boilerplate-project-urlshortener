@@ -47,7 +47,6 @@ app.post("/api/shorturl", (req, res) => {
 
   dns.lookup(url.hostname, (err, address) => {
     if (err && url.hostname !== "localhost") {
-      console.log(err);
       return res.json({ error: "invalid url" });
     }
 
@@ -65,7 +64,6 @@ app.post("/api/shorturl", (req, res) => {
 
 app.get("/api/shorturl/:short_url", (req, res) => {
   const shortUrl = req.params.short_url;
-  console.log(shortUrl);
   const urlData = dummyDB.find((el) => el.short_url == shortUrl);
   if (!urlData) {
     return res.json({ error: "No short URL found for given input" });
