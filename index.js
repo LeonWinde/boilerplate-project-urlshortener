@@ -34,34 +34,38 @@ app.post("/api/shorturl", (req, res) => {
   }
   const url = new URL(req.body.url);
 
-  if (
-    dns.lookup(url.host, (err, address) => {
-      if (err) {
-        console.log(err);
-        return res.json({ error: "invalid url" });
-      }
-      if (dummyDB.find((el) => el.original_url === req.body.url)) {
-        return res.json({
-          original_url: req.body.url,
-          short_url: dummyDB.find((el) => el.original_url === req.body.url)
-            .short_url,
-        });
-      }
-      urlnumber = generateNextUrlNumber();
-      dummyDB.push({
-        original_url: req.body.url,
-        short_url: urlnumber,
-      });
-      res.json({
-        original_url: req.body.url,
-        short_url: urlnumber,
-      });
-    })
-  );
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return res.json({ error: "invalid url" });
+  }
+  if (dummyDB.find((el) => el.original_url === req.body.url)) {
+    return res.json({
+      original_url: req.body.url,
+      short_url: dummyDB.find((el) => el.original_url === req.body.url)
+        .short_url,
+    });
+  }
+
+  dns.lookup(url.hostname, (err, address) => {
+    if (err && url.hostname !== "localhost") {
+      console.log(err);
+      return res.json({ error: "invalid url" });
+    }
+
+    const urlnumber = generateNextUrlNumber();
+    dummyDB.push({
+      original_url: req.body.url,
+      short_url: urlnumber,
+    });
+    res.json({
+      original_url: req.body.url,
+      short_url: urlnumber,
+    });
+  });
 });
 
 app.get("/api/shorturl/:short_url", (req, res) => {
   const shortUrl = req.params.short_url;
+  console.log(shortUrl);
   const urlData = dummyDB.find((el) => el.short_url == shortUrl);
   if (!urlData) {
     return res.json({ error: "No short URL found for given input" });
@@ -69,8 +73,7 @@ app.get("/api/shorturl/:short_url", (req, res) => {
   res.redirect(urlData.original_url);
 });
 
-
 const generateNextUrlNumber = () => {
   if (dummyDB.length === 0) return 1;
-  return Math.max(dummyDB.map((el) => el.short_url));
+  return Math.max(dummyDB.map((el) => el.short_url)) +1;
 };
